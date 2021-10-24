@@ -2,19 +2,28 @@
 import cv2
 from pdb import set_trace as bp
 
-def propose_regions(img):
+def propose_regions(img, num_regions=200):
     """
     Implementation of selective search for region proposal.
     We use SelectivSearchFast because we try not to bottleneck downstream neural network.
 
     :param img: Input image.
+    :param num_regions: Number of top regions to return. Default is 200.
     """
     segmentor = cv2.ximgproc.segmentation.createSelectiveSearchSegmentation()
     segmentor.setBaseImage(img)
-    segmentor.switchToSelectiveSearchQuality()
+    segmentor.switchToSelectiveSearchFast()
     regions = segmentor.process()
 
-    return regions
+    # Filter regions that are too small
+    width, height, _ = img.shape
+    filter = []
+    for _, _, region_width, region_height in regions:
+        filter.append((float(region_width)/width >= 0.1 or float(region_height)/height >= 0.1))
+
+    regions = regions[filter]
+
+    return regions[:num_regions]
 
 def visualize_regions(img, regions):
     """
