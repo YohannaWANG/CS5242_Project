@@ -1,3 +1,5 @@
 # Ignore training data
 
 Data_GTA/
+*.egg-info
+__pycache__
