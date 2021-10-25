@@ -4,8 +4,8 @@ Pytorch dataset for use on dataloaders
 import os
 import cv2
 import pandas as pd
-from preprocess.preprocess import propose_regions
 from torch.utils.data import Dataset
+from pdb import set_trace as bp
 
 class ImageDataset(Dataset):
     """
@@ -21,12 +21,17 @@ class ImageDataset(Dataset):
         self.annotations = pd.read_csv(annotation_file)
 
     def __len__(self):
-        return len(self.num_images)
+        return len(self.image_files)
 
     def __getitem__(self, index):
         img_path = os.path.join(self.data_dir, self.image_files[index])
-        img = cv2.imread("img_path")
-        regions =  propose_regions(img, num_regions=1000)
-        annotations = self.annotations[self.annotations["filename"] == self.image_files[index]]
+        img = cv2.imread(img_path)
+        annotations = self.annotations[self.annotations["Filename"] == self.image_files[index]]
 
-        return img_path, regions, annotations
+        return img,  annotations
+
+if __name__ == "__main__":
+    dataset = ImageDataset()
+    print(f"Dataset contains {len(dataset)} images")
+    # Take a sample for sanity
+    print(dataset[0])
