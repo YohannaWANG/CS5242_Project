@@ -1,5 +1,7 @@
 
 import cv2
+import torch
+from torchvision.ops import roi_pool, RoIPool
 from pdb import set_trace as bp
 
 def propose_regions(img, num_regions=200):
@@ -44,6 +46,10 @@ if __name__ == "__main__":
     img = cv2.imread("data/Data_GTA/0001.jpg")
     regions = propose_regions(img)
     proposal_img = visualize_regions(img, regions)
-    cv2.imshow("Proposals", proposal_img)
-    cv2.waitKey(0)
+    # cv2.imshow("Proposals", proposal_img)
+    # cv2.waitKey(0)
+
+    regions_tensor = torch.from_numpy(regions)
+    roipool_layer = RoIPool((7,7), 1/16)
+    derp = roipool_layer(regions_tensor)
     bp()
