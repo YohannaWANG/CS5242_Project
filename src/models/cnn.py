@@ -4,8 +4,6 @@ import torch.nn as nn
 from torchvision.ops import RoIPool
 from preprocess.preprocess import propose_regions
 
-from pdb import set_trace as bp
-
 class RCNN(nn.Module):
     """ Fast Regional Convolutional Neural Network implementation """
 
@@ -125,5 +123,3 @@ if __name__ == "__main__":
     boxes = torch.cat((img_idx, regions_tensor), dim=1)
 
     class_pred, bbox_pred = model(img_tensor, boxes)
-
-    bp() 
