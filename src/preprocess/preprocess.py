@@ -1,7 +1,7 @@
 
 import cv2
 import torch
-from torchvision.ops import roi_pool, RoIPool
+from torchvision.ops import RoIPool
 from pdb import set_trace as bp
 
 def propose_regions(img, num_regions=200):
@@ -41,11 +41,37 @@ def visualize_regions(img, regions):
 
     return img_copy
 
+def calculate_iou(proposal, label):
+    """
+    Calculate the intersection over union between bounding boxes of selective search and labels
+
+    :param proposals: A region proposal bounding box
+    :param label: Bounding box of label
+    """
+    x_p, y_p, w_p, h_p = proposal
+    x_l, y_l, w_l, h_l = label
+
+    # Get corners of intersection
+    x_intersect1, x_intersect2 = max(x_p, x_l), max(x_p + w_p, x_l + w_l)
+    y_intersect1, y_intersect2 = max(y_p, y_l), max(y_p + h_p, y_l + h_l)
+
+    # Get areas of intersection
+    intersect_width = abs(x_intersect2 - x_intersect1)
+    intersect_height = abs(y_intersect2 - y_intersect1)
+    intersect_area = intersect_height * intersect_width
+
+    # Calculate union area
+    p_area = w_p * h_p
+    l_area = w_l * h_l
+    union_area = p_area + l_area - intersect_area
+
+    return intersect_area/union_area
 
 if __name__ == "__main__":
     img = cv2.imread("data/Data_GTA/0001.jpg")
     regions = propose_regions(img)
     proposal_img = visualize_regions(img, regions)
+
     # cv2.imshow("Proposals", proposal_img)
     # cv2.waitKey(0)
 
