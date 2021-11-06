@@ -46,7 +46,6 @@ class ImageDataset(Dataset):
         zeros = np.zeros((len(regions), 2), dtype=float)
         labels = np.concatenate((copy.deepcopy(regions), zeros), axis=1)
 
-
         # Calculate iou of each roi with annotations
         # Assign the annotation that has the largest iou as the bbox label
         for idx, region in enumerate(regions):
@@ -74,10 +73,15 @@ class ImageDataset(Dataset):
                     labels[idx][3] = bbox_height
                     labels[idx][4] = self.classes.get(row['Label'], 0)
                     labels[idx][5] = iou
+        
 
         img_tensor = torch.from_numpy(img).type(torch.float32).permute(2,0,1)
         roi_tensor = torch.from_numpy(regions).type(torch.LongTensor)
         label_tensor = torch.from_numpy(labels[:,:-1]).type(torch.LongTensor)
+
+        # ROI Pooling requires boxes to be of Tensor([K, 5]). First column is img index, which is 0 in this example
+        img_idx = torch.ones((200,1)) * index
+        roi = torch.cat((img_idx, roi_tensor), dim=1)
 
         return img_tensor, roi_tensor, label_tensor
 

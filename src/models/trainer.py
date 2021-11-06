@@ -26,6 +26,8 @@ def train(model, trainset, num_epochs=1, lr=0.1):
         for i, (img, rois, labels) in enumerate(tqdm(train_loader)):
             img, rois, labels = img.to(device), rois.to(device), labels.to(device)
 
+            bp()
+
             class_pred, bbox_pred = model(img, rois)
 
             loss = criterion(class_pred, labels[:,4], bbox_pred, labels[:,:4])
