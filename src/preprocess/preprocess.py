@@ -41,31 +41,36 @@ def visualize_regions(img, regions):
 
     return img_copy
 
-def calculate_iou(proposal, label):
+def calculate_iou(boxA, boxB):
     """
     Calculate the intersection over union between bounding boxes of selective search and labels
 
     :param proposals: A region proposal bounding box
     :param label: Bounding box of label
     """
-    x_p, y_p, w_p, h_p = proposal
-    x_l, y_l, w_l, h_l = label
+    # determine the (x, y)-coordinates of the intersection rectangle
+    xA = max(boxA[0], boxB[0])
+    yA = max(boxA[1], boxB[1])
+    xB = min(boxA[2], boxB[2])
+    yB = min(boxA[3], boxB[3])
 
-    # Get corners of intersection
-    x_intersect1, x_intersect2 = max(x_p, x_l), max(x_p + w_p, x_l + w_l)
-    y_intersect1, y_intersect2 = max(y_p, y_l), max(y_p + h_p, y_l + h_l)
+    # compute the area of intersection rectangle
+    interArea = abs(max((xB - xA, 0)) * max((yB - yA), 0))
+    if interArea == 0:
+        return 0
 
-    # Get areas of intersection
-    intersect_width = abs(x_intersect2 - x_intersect1)
-    intersect_height = abs(y_intersect2 - y_intersect1)
-    intersect_area = intersect_height * intersect_width
+    # compute the area of both the prediction and ground-truth
+    # rectangles
+    boxAArea = abs((boxA[2] - boxA[0]) * (boxA[3] - boxA[1]))
+    boxBArea = abs((boxB[2] - boxB[0]) * (boxB[3] - boxB[1]))
 
-    # Calculate union area
-    p_area = w_p * h_p
-    l_area = w_l * h_l
-    union_area = p_area + l_area - intersect_area
+    # compute the intersection over union by taking the intersection
+    # area and dividing it by the sum of prediction + ground-truth
+    # areas - the interesection area
+    iou = interArea / float(boxAArea + boxBArea - interArea)
 
-    return intersect_area/union_area
+    # return the intersection over union value
+    return iou
 
 if __name__ == "__main__":
     img = cv2.imread("data/Data_GTA/0001.jpg")
