@@ -4,7 +4,7 @@ boxes.txt and boxes-tiny.txt
 """
 import pandas as pd
 
-with open("boxes-tiny.txt", 'r') as fp:
+with open("boxes.txt", 'r') as fp:
     lines = fp.readlines()
 
 outlines = []
@@ -20,4 +20,4 @@ for line in lines:
 
 df = pd.DataFrame(outlines, columns=["Label", "Left", "Top", "Right", "Bottom", "Filename"])
 
-df.to_csv("boxes-tiny-clean.csv", index=False)
+df.to_csv("boxes-clean.csv", index=False)
