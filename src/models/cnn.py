@@ -22,7 +22,7 @@ class RCNN(nn.Module):
     
         self.roi_pool = RoIPool((7, 7), scale_factor)
 
-        self.classifier = Detector(n_ch * 7 * 7, 2)
+        self.classifier = Detector(n_ch * 7 * 7, 6)
 
     def forward(self, img, roi):
         feature_maps = self.convnet(img)
@@ -96,7 +96,7 @@ class Detector(nn.Module):
         # This does classification
         self.classifier = nn.Linear(in_features=4096, out_features=n_class)
         # This does bounding box regression
-        self.regressor = nn.Linear(in_features=4096, out_features=n_class * 4)
+        self.regressor = nn.Linear(in_features=4096, out_features=4)
 
     def forward(self, x):
         """ Predict class and bounding box for each region """

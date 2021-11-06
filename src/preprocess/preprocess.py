@@ -1,7 +1,10 @@
 
 import cv2
+import os
+import copy
+import numpy as np
 import torch
-from torchvision.ops import RoIPool
+import pandas as pd
 from pdb import set_trace as bp
 
 def propose_regions(img, num_regions=200):
@@ -73,14 +76,52 @@ def calculate_iou(boxA, boxB):
     return iou
 
 if __name__ == "__main__":
-    img = cv2.imread("data/Data_GTA/0001.jpg")
-    regions = propose_regions(img)
-    proposal_img = visualize_regions(img, regions)
+    # Preprocess all the images
+    data_dir = "data/Data_GTA/"
+    files = os.listdir(data_dir)
+    all_annotations = pd.read_csv("data/boxes-clean.csv")
 
-    # cv2.imshow("Proposals", proposal_img)
-    # cv2.waitKey(0)
+    classes = {
+        "background": 0,
+        "car": 1,
+        "trafficlight": 2,
+        "bus": 3,
+        "truck": 4,
+        "person": 5
+    }
 
-    regions_tensor = torch.from_numpy(regions)
-    roipool_layer = RoIPool((7,7), 1/16)
-    derp = roipool_layer(regions_tensor)
+    # Initialize tensors
+    roi = torch.zeros((1, 5)).type(torch.LongTensor)
+    gt = torch.zeros((1, 5)).type(torch.LongTensor)
+
+
+    for idx, file in enumerate(files):
+        # Read image
+        print(f"Processing {file}")
+        filepath = os.path.join(data_dir, file)
+        img = cv2.imread(filepath)
+
+        # Propose regions
+        regions = propose_regions(img, num_regions=2000)
+        # proposal_img = visualize_regions(img, regions)
+        zeros = np.zeros((len(regions), 2), dtype=float)
+        labels = np.concatenate((copy.deepcopy(regions), zeros), axis=1)
+
+        # Get annotations of this image
+        annotations = all_annotations[all_annotations["Filename"] == file]
+
+        roi_tensor = torch.from_numpy(regions).type(torch.LongTensor)
+        label_tensor = torch.from_numpy(labels[:,:-1]).type(torch.LongTensor)
+
+        # ROI Pooling requires boxes to be of Tensor([K, 5]). First column is img index, which is 0 in this example
+        img_idx = torch.ones((roi_tensor.size(0),1)) * idx
+        roi_tensor = torch.cat((img_idx, roi_tensor), dim=1)
+
+        if idx == 0:
+            roi = roi_tensor
+        else:
+            roi = torch.cat((roi, roi_tensor), dim=0)
+
+    torch.save(roi, "data/roi.pkl")
+
     bp()

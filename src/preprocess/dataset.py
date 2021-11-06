@@ -80,8 +80,8 @@ class ImageDataset(Dataset):
         label_tensor = torch.from_numpy(labels[:,:-1]).type(torch.LongTensor)
 
         # ROI Pooling requires boxes to be of Tensor([K, 5]). First column is img index, which is 0 in this example
-        img_idx = torch.ones((200,1)) * index
-        roi = torch.cat((img_idx, roi_tensor), dim=1)
+        # img_idx = torch.ones((roi_tensor.size(0),1)) * index
+        # roi_tensor = torch.cat((img_idx, roi_tensor), dim=1)
 
         return img_tensor, roi_tensor, label_tensor
 
