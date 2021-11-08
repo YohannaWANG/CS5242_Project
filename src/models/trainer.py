@@ -30,7 +30,7 @@ def train(model, trainset, num_epochs=10, lr=0.1, batch_size=2):
             img, rois, bbox, cls = img.to(device), rois.to(device), bbox.to(device), cls.to(device)
 
             # Concatenate rois
-            for batch_i in range(batch_size):
+            for batch_i in range(img.size(0)):
 
                 indices = torch.ones((rois.size(1),1)) * batch_i
                 indices = indices.to(device)
