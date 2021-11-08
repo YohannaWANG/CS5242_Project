@@ -2,7 +2,7 @@
 Utility functions for training and testing the individual models
 """
 import torch
-import torchvision
+import time
 from torch.utils.data import DataLoader
 from preprocess.dataset import ImageDataset
 from models.cnn import RCNN
@@ -17,11 +17,14 @@ def train(model, trainset, num_epochs=1, lr=0.1, batch_size=2):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
 
-    train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True)
+    train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
     criterion = MultiTaskLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     for epoch in range(num_epochs):
+
+        running_loss = 0.0
+        start_time = time.time()
 
         for i, (img, rois, bbox, cls) in enumerate(tqdm(train_loader)):
             img, rois, bbox, cls = img.to(device), rois.to(device), bbox.to(device), cls.to(device)
@@ -51,7 +54,10 @@ def train(model, trainset, num_epochs=1, lr=0.1, batch_size=2):
             loss.backward()
             optimizer.step()
 
-            tqdm.write(f"Iteration {i}, Loss: {loss}")
+            running_loss += loss.detach().item()
+
+            if i % 10 == 0:
+                tqdm.write(f"Iteration {i}, Loss: {running_loss/i}, Avg iteration time: {(time.time() - start_time)/i}s")
 
 if __name__ == "__main__":
     width = 1280
