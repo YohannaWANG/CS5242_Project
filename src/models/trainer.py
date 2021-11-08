@@ -57,7 +57,9 @@ def train(model, trainset, num_epochs=1, lr=0.1, batch_size=2):
             running_loss += loss.detach().item()
 
             if i % 10 == 0:
-                tqdm.write(f"Iteration {i}, Loss: {running_loss/i}, Avg iteration time: {(time.time() - start_time)/i}s")
+                tqdm.write(
+                    f"Iteration {i}, Loss: {running_loss/(i + 1)}, Avg iteration time: {(time.time() - start_time)/(i + 1)}s"
+                )
 
 if __name__ == "__main__":
     width = 1280
