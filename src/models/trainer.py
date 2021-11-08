@@ -30,6 +30,7 @@ def train(model, trainset, num_epochs=1, lr=0.1, batch_size=2):
             for batch_i in range(batch_size):
 
                 indices = torch.ones((rois.size(1),1)) * batch_i
+                indices = indices.to(device)
                 # rois = torch.cat((indices, rois), dim=1)
                 if batch_i == 0:
                     cat_rois = rois[batch_i]

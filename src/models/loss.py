@@ -18,6 +18,7 @@ class MultiTaskLoss(nn.Module):
         self.cls_criterion = nn.CrossEntropyLoss()
         self.regression_criterion = nn.SmoothL1Loss()
         self.alpha = alpha
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     def forward(self, logits, labels, bbox_pred, bbox_labels):
         """
@@ -30,7 +31,7 @@ class MultiTaskLoss(nn.Module):
         """
         L_cls = self.cls_criterion(logits, labels)
         L_loc = self.regression_criterion(bbox_pred, bbox_labels)
-        iverson_indicator = (labels > 0).type(torch.LongTensor)
+        iverson_indicator = (labels > 0).type(torch.LongTensor).to(self.device)
 
         # Calclutate multi-task loss
         loss = L_cls + (self.alpha * iverson_indicator * L_loc).sum()
