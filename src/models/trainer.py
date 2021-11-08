@@ -23,8 +23,8 @@ def train(model, trainset, num_epochs=1, lr=0.1, batch_size=2):
 
     for epoch in range(num_epochs):
 
-        for i, (img, rois, labels) in enumerate(tqdm(train_loader)):
-            img, rois, labels = img.to(device), rois.to(device), labels.to(device)
+        for i, (img, rois, bbox, cls) in enumerate(tqdm(train_loader)):
+            img, rois, bbox, cls = img.to(device), rois.to(device), bbox.to(device), cls.to(device)
 
             # Concatenate rois
             for batch_i in range(batch_size):
@@ -34,15 +34,17 @@ def train(model, trainset, num_epochs=1, lr=0.1, batch_size=2):
                 if batch_i == 0:
                     cat_rois = rois[batch_i]
                     cat_indices = indices
-                    cat_labels = labels[batch_i]
+                    cat_bbox = bbox[batch_i]
+                    cat_cls = cls[batch_i]
                 else:
                     cat_rois = torch.cat((cat_rois, rois[batch_i]))
                     cat_indices = torch.cat((cat_indices, indices))
-                    cat_labels = torch.cat((cat_labels, labels[batch_i]))
+                    cat_bbox = torch.cat((cat_bbox, bbox[batch_i]))
+                    cat_cls = torch.cat((cat_cls, cls[batch_i]))
 
             cat_rois = torch.cat((cat_indices, cat_rois), dim=1)
             class_pred, bbox_pred = model(img, cat_rois)
-            loss = criterion(class_pred, cat_labels[:,4], bbox_pred, cat_labels[:,:4])
+            loss = criterion(class_pred, cat_cls, bbox_pred, cat_bbox)
 
             optimizer.zero_grad()
             loss.backward()

@@ -3,6 +3,7 @@ Pytorch dataset for use on dataloaders
 """
 import os
 import cv2
+import time
 import torch
 import copy
 import numpy as np
@@ -75,15 +76,16 @@ class ImageDataset(Dataset):
                     labels[idx][5] = iou
         
 
-        img_tensor = torch.from_numpy(img).type(torch.float32).permute(2,0,1)
-        roi_tensor = torch.from_numpy(regions).type(torch.LongTensor)
-        label_tensor = torch.from_numpy(labels[:,:-1]).type(torch.LongTensor)
+        img_tensor = torch.from_numpy(img).type(torch.FloatTensor).permute(2,0,1)
+        roi_tensor = torch.from_numpy(regions).type(torch.FloatTensor)
+        bbox_tensor = torch.from_numpy(labels[:,:4]).type(torch.FloatTensor)
+        cls_tensor = torch.from_numpy(labels[:,4]).type(torch.LongTensor)
 
         # ROI Pooling requires boxes to be of Tensor([K, 5]). First column is img index, which is 0 in this example
         # img_idx = torch.ones((roi_tensor.size(0),1)) * index
         # roi_tensor = torch.cat((img_idx, roi_tensor), dim=1)
 
-        return img_tensor, roi_tensor, label_tensor
+        return img_tensor, roi_tensor, bbox_tensor, cls_tensor
 
 if __name__ == "__main__":
     dataset = ImageDataset()

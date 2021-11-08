@@ -7,7 +7,7 @@ from pdb import set_trace as bp
 
 class MultiTaskLoss(nn.Module):
 
-    def __init__(self, alpha=1):
+    def __init__(self, alpha=1.0):
         """
         Constructor for multi-task loss
 
