@@ -3,7 +3,6 @@ Pytorch dataset for use on dataloaders
 """
 import os
 import cv2
-import time
 import torch
 import copy
 import numpy as np
