@@ -1,28 +1,41 @@
 import torch
 import torch.nn as nn
+from torchvision.ops import RoIPool
 
-class Model(nn.Module):
+class DenseModel(nn.Module):
     """ The custom model for Spot robot """
 
-    def __init__(self, input_size, output_size):
-        super(Model, self).__init__()
+    def __init__(self, width, height, n_ch, n_class):
+        super(DenseModel, self).__init__()
 
         self.mlp = nn.Sequential(
-            nn.BatchNorm1d(input_size),
-            nn.Linear(in_features=input_size, out_features=4096),
+            nn.BatchNorm1d(width * height * n_ch),
+            nn.Linear(in_features=width * height * n_ch, out_features=4096),
             nn.BatchNorm1d(4096),
             nn.ReLU(inplace=True),
-            nn.Linear(in_features=4096, out_features=4096),
-            nn.BatchNorm1d(4096),
+            nn.Linear(in_features=4096, out_features=2048),
+            nn.BatchNorm1d(2048),
             nn.ReLU(inplace=True),
-            nn.Linear(in_features=4096, out_features=output_size),
+            nn.Linear(in_features=2048, out_features=1024),
+            nn.BatchNorm1d(1024),
+            nn.ReLU(inplace=True)
         )
 
-    def forward(self, img):
+        # ROI max pooling on image itself
+        self.roi_pool = RoIPool((7, 7), 1)
+        # This does classification
+        self.classifier = nn.Linear(in_features=1024, out_features=n_class)
+        # This does bounding box regression
+        self.regressor = nn.Linear(in_features=1024, out_features=4)
+
+    def forward(self, img, roi):
         """
         Forward propagation. img is expected to be a tensor of (bs, n_ch, height, width).
         Intention is a tensor of (bs,) and needs to be one hot encoded to (bs,3).
         """
-        X = torch.flatten(img, start_dim=1)
-        logits = self.mlp(X)
-        return logits
+        roi_out = self.roi_pool(img, roi)
+        x = torch.flatten(roi_out, start_dim=1)
+        logits = self.mlp(x)
+        class_pred_logits = self.classifier(logits)
+        bbox_pred_logits = self.regressor(logits)
+        return class_pred_logits, bbox_pred_logits

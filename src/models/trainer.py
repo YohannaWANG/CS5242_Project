@@ -6,11 +6,12 @@ import time
 from torch.utils.data import DataLoader
 from preprocess.dataset import ImageDataset
 from models.cnn import RCNN
+from models.mlp import DenseModel
 from models.loss import MultiTaskLoss
 from tqdm import tqdm
 from pdb import set_trace as bp
 
-def train(model, trainset, num_epochs=10, lr=0.1, batch_size=2):
+def train(model, trainset, model_type='cnn', num_epochs=10, lr=0.1, batch_size=2):
     """
     Trainer for the different models on different datasets
     """
@@ -62,18 +63,24 @@ def train(model, trainset, num_epochs=10, lr=0.1, batch_size=2):
                 )
 
         # Save models and metrics
-        torch.save(model.state_dict(), f"fast-rcnn-epoch{epoch}.pt")
-        with open("metrics.txt", 'w+') as fp:
+        torch.save(model.state_dict(), f"fast-r{model_type}-epoch{epoch}.pt")
+        with open(f"r{model_type}-metrics.txt", 'w+') as fp:
             fp.write(f"Epoch {epoch}, Loss: {running_loss/(i + 1)}")
 
 if __name__ == "__main__":
     width = 1280
     height = 720
     n_ch = 3
-    model = RCNN(width, height, n_ch)
+    model_type = 'mlp'
+    num_classes = 6
 
     trainset = ImageDataset()
 
-    train(model, trainset)
+    if model_type == 'cnn':
+        model = RCNN(width, height, n_ch)
+    elif model_type == 'mlp':
+        model = DenseModel(width, height, n_ch, num_classes)
+
+    train(model, trainset, model_type=model_type)
     
     bp()
