@@ -8,9 +8,15 @@ class DenseModel(nn.Module):
     def __init__(self, width, height, n_ch, n_class):
         super(DenseModel, self).__init__()
 
+        # ROI max pooling on image itself
+        self.roi_pool = RoIPool((7, 7), 1)
+
+        # Get a pseudo size
+        input_size = n_ch * 7 * 7
+
         self.mlp = nn.Sequential(
-            nn.BatchNorm1d(width * height * n_ch),
-            nn.Linear(in_features=width * height * n_ch, out_features=4096),
+            nn.BatchNorm1d(input_size),
+            nn.Linear(in_features=input_size, out_features=4096),
             nn.BatchNorm1d(4096),
             nn.ReLU(inplace=True),
             nn.Linear(in_features=4096, out_features=2048),
@@ -20,9 +26,7 @@ class DenseModel(nn.Module):
             nn.BatchNorm1d(1024),
             nn.ReLU(inplace=True)
         )
-
-        # ROI max pooling on image itself
-        self.roi_pool = RoIPool((7, 7), 1)
+        
         # This does classification
         self.classifier = nn.Linear(in_features=1024, out_features=n_class)
         # This does bounding box regression
