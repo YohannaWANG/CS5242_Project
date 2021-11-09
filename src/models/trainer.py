@@ -63,7 +63,7 @@ def train(model, trainset, num_epochs=10, lr=0.1, batch_size=2):
 
         # Save models and metrics
         torch.save(model.state_dict(), f"fast-rcnn-epoch{epoch}.pt")
-        with open("metrics.txt", 'w') as fp:
+        with open("metrics.txt", 'w+') as fp:
             fp.write(f"Epoch {epoch}, Loss: {running_loss/(i + 1)}")
 
 if __name__ == "__main__":
