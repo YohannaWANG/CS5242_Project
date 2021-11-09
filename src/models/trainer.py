@@ -11,14 +11,14 @@ from models.loss import MultiTaskLoss
 from tqdm import tqdm
 from pdb import set_trace as bp
 
-def train(model, trainset, model_type='cnn', num_epochs=10, lr=0.1, batch_size=2):
+def train(model, trainset, model_type='cnn', num_epochs=10, lr=0.1, batch_size=4):
     """
     Trainer for the different models on different datasets
     """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
 
-    train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
+    train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=4)
     criterion = MultiTaskLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
