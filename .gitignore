@@ -3,3 +3,5 @@
 Data_GTA/
 *.egg-info
 __pycache__
+
+models.zip
