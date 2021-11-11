@@ -4,4 +4,6 @@ Data_GTA/
 *.egg-info
 __pycache__
 
+# Ignore models because too big
+trained_models
 models.zip

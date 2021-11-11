@@ -231,7 +231,7 @@ def compute_average_precision_with_recall_thresholds(precision, recall, recall_t
         average_precision = average_precision + p / recall_thresholds.size
     return average_precision
 
-def _evaluate_class(class_id, iou_threshold, recall_thresholds, mpolicy="greedy"):
+def _evaluate_class(class_id, iou_threshold, recall_thresholds, class_counter, mpolicy="greedy"):
     """ Evaluate class.
 
     Arguments:
@@ -281,34 +281,44 @@ def _evaluate_class(class_id, iou_threshold, recall_thresholds, mpolicy="greedy"
         )
     return average_precision, precision, recall
 
-num_classes= 1
-iou_thresholds=[0.5]
-recall_thresholds = None
-mpolicy = "greedy"
-preds, gt = _check_empty(preds, gt)
+def average_precision(preds, gt, num_classes=1, iou_thresholds=[0.5], recall_thresholds=None, mpolicy="greedy"):
+    """
+    Main function for mAP calculation
+    """
+    preds, gt = _check_empty(preds, gt)
 
-assert preds.ndim == 2 and preds.shape[1] == 6
-assert gt.ndim == 2 and gt.shape[1] == 7
-class_counter = np.zeros((1, num_classes), dtype=np.int32)
+    # 
+    preds[:,2] = preds[:, 0] + preds[:, 2]
+    preds[:,3] = preds[:, 1] + preds[:, 3]
+    gt[:,2] = gt[:, 0] + gt[:, 2]
+    gt[:,3] = gt[:, 1] + gt[:, 3]
 
-for c in range(num_classes):
-    gt_c = gt[gt[:, 4] == c]
-    class_counter[0, c] = gt_c.shape[0]
-    preds_c = preds[preds[:, 4] == c]
-    if preds_c.shape[0] > 0:
-        iou = compute_iou(preds, gt).tolist()
-    else:
-        iou = _empty_array_2d(preds.shape[0])
+    assert preds.ndim == 2 and preds.shape[1] == 6
+    assert gt.ndim == 2 and gt.shape[1] == 7
+    class_counter = np.zeros((1, num_classes), dtype=np.int32)
+
+    for c in range(num_classes):
+        gt_c = gt[gt[:, 4] == c]
+        class_counter[0, c] = gt_c.shape[0]
+        # preds_c = preds[preds[:, 4] == c]
+        # if preds_c.shape[0] > 0:
+        #     iou = compute_iou(preds, gt).tolist()
+        # else:
+        #     iou = _empty_array_2d(preds.shape[0])
 
 
-aps = np.zeros((0, num_classes), dtype=np.float32)
-for t in iou_thresholds:
-    aps_t = np.zeros((1, num_classes), dtype=np.float32)
-    for class_id in range(num_classes):
-        aps_t[0, class_id], precision, recall = _evaluate_class(
-            class_id, t, recall_thresholds, mpolicy
-        )
-    aps = np.concatenate((aps, aps_t), axis=0)
+    aps = np.zeros((0, num_classes), dtype=np.float32)
+    for t in iou_thresholds:
+        aps_t = np.zeros((1, num_classes), dtype=np.float32)
+        for class_id in range(num_classes):
+            aps_t[0, class_id], precision, recall = _evaluate_class(
+                class_id, t, recall_thresholds, class_counter, mpolicy
+            )
+        aps = np.concatenate((aps, aps_t), axis=0)
 
-print(aps.mean(axis=1).mean(axis=0))
+    return aps
 
+if __name__ == "__main__":
+    # Sanity check
+    ap_score = average_precision(preds, gt)
+    print(ap_score.mean())
