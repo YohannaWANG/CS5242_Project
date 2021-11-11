@@ -55,6 +55,8 @@ def evaluate(model, testset, batch_size=2, num_workers=2):
             class_pred, bbox_pred = model(img, cat_rois)
             class_pred_cls = torch.argmax(class_pred, 1).unsqueeze(1).type(torch.LongTensor)
             class_pred_score = torch.max(torch.softmax(class_pred, dim=1), 1)[0].unsqueeze(1)
+            class_pred_cls = class_pred_cls.to(device)
+            class_pred_score = class_pred_score.to(device)
 
             # Prepare preds and ground truth for average precision
             preds = torch.cat((torch.cat((bbox_pred, class_pred_cls), dim=1), class_pred_score), dim=1)
@@ -65,9 +67,9 @@ def evaluate(model, testset, batch_size=2, num_workers=2):
             gt_mask = (cat_cls.unsqueeze(1) > 0)
 
             # Add some extra dimensions for average precision
-            difficult = torch.zeros((gt.size(0),1), dtype=torch.float32)
+            difficult = torch.zeros((gt.size(0),1), dtype=torch.float32).to(device)
             gt = torch.cat((gt, difficult), 1)
-            crowd = torch.zeros((gt.size(0),1), dtype=torch.float32)
+            crowd = torch.zeros((gt.size(0),1), dtype=torch.float32).to(device)
             gt = torch.cat((gt, crowd), 1)
 
             # Use only the non background to calculate mAP
@@ -78,9 +80,9 @@ def evaluate(model, testset, batch_size=2, num_workers=2):
         
         if i == 0:
             # Batch 0
-            ap_score = average_precision(preds, gt, num_classes=2)
+            ap_score = average_precision(preds, gt, num_classes)
         else:
-            ap_score = np.hstack((ap_score, average_precision(preds, gt, num_classes=2)))
+            ap_score = np.hstack((ap_score, average_precision(preds, gt, num_classes)))
             print(ap_score.shape)
 
         print(f"Batch {i} mAP: {ap_score.mean()}.")
