@@ -9,10 +9,10 @@ class DenseModel(nn.Module):
         super(DenseModel, self).__init__()
 
         # ROI max pooling on image itself
-        self.roi_pool = RoIPool((7, 7), 1)
+        self.roi_pool = RoIPool((224, 224), 1)
 
         # Get a pseudo size
-        input_size = n_ch * 7 * 7
+        input_size = n_ch * 224 * 224
 
         self.mlp = nn.Sequential(
             nn.BatchNorm1d(input_size),
