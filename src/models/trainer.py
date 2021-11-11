@@ -8,17 +8,19 @@ from preprocess.dataset import ImageDataset
 from models.cnn import RCNN
 from models.mlp import DenseModel
 from models.loss import MultiTaskLoss
+from models.evaluate import evaluate
 from tqdm import tqdm
 from pdb import set_trace as bp
 
-def train(model, trainset, model_type='cnn', num_epochs=10, lr=0.1, batch_size=4):
+def train(model, trainset, testset, model_type='cnn', num_epochs=10, lr=0.1, batch_size=4, num_workers=4):
     """
     Trainer for the different models on different datasets
     """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
 
-    train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=4)
+    train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+
     criterion = MultiTaskLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
@@ -62,10 +64,15 @@ def train(model, trainset, model_type='cnn', num_epochs=10, lr=0.1, batch_size=4
                     f"Iteration {i}, Loss: {running_loss/(i + 1)}, Avg iteration time: {(time.time() - start_time)/(i + 1)}s"
                 )
 
+        # Evaluate during current model
+        mAP_score = evaluate(model, testset, batch_size=batch_size, num_workers=num_workers)
+
+        print(f"Epoch {epoch}, Loss: {running_loss/(i + 1)}, mAP: {mAP_score}")
+
         # Save models and metrics
         torch.save(model.state_dict(), f"fast-r{model_type}-epoch{epoch}.pt")
-        with open(f"r{model_type}-metrics.txt", 'w+') as fp:
-            fp.write(f"Epoch {epoch}, Loss: {running_loss/(i + 1)}")
+        with open(f"r{model_type}-metrics.txt", 'a+') as fp:
+            fp.write(f"Epoch: {epoch}, Loss: {running_loss/(i + 1)}, mAP: {mAP_score}\n")
 
 if __name__ == "__main__":
     width = 1280
@@ -75,12 +82,13 @@ if __name__ == "__main__":
     num_classes = 6
 
     trainset = ImageDataset()
+    testset = ImageDataset(is_train=False)
 
     if model_type == 'cnn':
         model = RCNN(width, height, n_ch)
     elif model_type == 'mlp':
         model = DenseModel(width, height, n_ch, num_classes)
 
-    train(model, trainset, model_type=model_type)
+    train(model, trainset, testset, model_type=model_type)
     
     bp()
