@@ -76,7 +76,7 @@ def evaluate(model, testset, batch_size=2, num_workers=2):
             # preds = torch.masked_select(preds, gt_mask)
             # gt = torch.masked_select(gt, gt_mask)
 
-        preds, gt = preds.numpy(), gt.numpy()
+        preds, gt = preds.cpu().numpy(), gt.cpu().numpy()
         
         if i == 0:
             # Batch 0
