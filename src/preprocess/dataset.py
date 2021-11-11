@@ -17,12 +17,17 @@ class ImageDataset(Dataset):
     to prepare for CNN/MLP training.
     """
 
-    def __init__(self, data_dir="data/Data_GTA", annotation_file="data/boxes-clean.csv", is_train=True):
+    def __init__(self, data_dir="data/images/", annotation_dir="data/", is_train=True):
         self.data_dir = data_dir
-        self.image_files = [name for name in os.listdir(data_dir) if os.path.isfile(os.path.join(data_dir, name))]
         self.is_train = is_train
 
+        if is_train:
+            annotation_file = os.path.join(annotation_dir, "boxes-train-clean.csv")
+        else:
+            annotation_file = os.path.join(annotation_dir, "boxes-test-clean.csv")
+
         self.annotations = pd.read_csv(annotation_file)
+        self.image_files = list(self.annotations['Filename'].unique())
 
         self.classes = {
             "background": 0,
@@ -90,5 +95,5 @@ if __name__ == "__main__":
     dataset = ImageDataset()
     print(f"Dataset contains {len(dataset)} images")
     # Take a sample for sanity
-    img, labels = dataset[0]
+    img, roi, bbox, cls = dataset[0]
     bp()
