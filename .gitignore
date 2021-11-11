@@ -1,3 +1,9 @@
 # Ignore training data
 
-Data_GTA/
+images/
+*.egg-info
+__pycache__
+
+# Ignore models because too big
+trained_models
+models.zip
