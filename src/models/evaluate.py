@@ -85,7 +85,7 @@ def evaluate(model, testset, batch_size=2, num_workers=2):
             ap_score = np.hstack((ap_score, average_precision(preds, gt, num_classes)))
             print(ap_score.shape)
 
-        print(f"Batch {i} mAP: {ap_score.mean()}.")
+        tqdm.write(f"Batch {i} mAP: {ap_score.mean()}.")
 
     print(f"Total mAP: {ap_score.mean()}")
     return ap_score.mean()
