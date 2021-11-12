@@ -87,7 +87,6 @@ def evaluate(model, testset, batch_size=2, num_workers=2):
 
         print(f"Batch {i} mAP: {ap_score.mean()}.")
 
-    bp()
     print(f"Total mAP: {ap_score.mean()}")
     return ap_score.mean()
 

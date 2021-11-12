@@ -78,7 +78,7 @@ if __name__ == "__main__":
     width = 1280
     height = 720
     n_ch = 3
-    model_type = 'cnn'
+    model_type = 'mlp'
     num_classes = 6
 
     trainset = ImageDataset()
