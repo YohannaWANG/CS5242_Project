@@ -17,7 +17,7 @@ from preprocess.dataset import ImageDataset
 
 from pdb import set_trace as bp
 
-def evaluate(model, testset, batch_size=2, num_workers=2):
+def evaluate(model, testset, batch_size=4, num_workers=4):
     """
     Evaluates the mean average precision (mAP) of the model given ground truth.
 
@@ -28,7 +28,7 @@ def evaluate(model, testset, batch_size=2, num_workers=2):
     model = model.to(device)
     test_loader = DataLoader(testset, batch_size=batch_size, num_workers=num_workers)
 
-    metric_fn = MetricBuilder.build_evaluation_metric("map_2d", async_mode=True, num_classes=6)
+    metric_fn = MetricBuilder.build_evaluation_metric("map_2d", async_mode=False, num_classes=6)
 
     for i, (img, rois, bbox, cls) in enumerate(tqdm(test_loader)):
         img, rois, bbox, cls = img.to(device), rois.to(device), bbox.to(device), cls.to(device)

@@ -3,6 +3,7 @@ Utility functions for training and testing the individual models
 """
 import torch
 import time
+import argparse
 from torch.utils.data import DataLoader
 from preprocess.dataset import ImageDataset
 from models.cnn import RCNN
@@ -64,21 +65,20 @@ def train(model, trainset, testset, model_type='cnn', num_epochs=40, lr=0.1, bat
                     f"Iteration {i}, Loss: {running_loss/(i + 1)}, Avg iteration time: {(time.time() - start_time)/(i + 1)}s"
                 )
 
-        # Evaluate during current model
-        mAP_score = evaluate(model, testset, batch_size=batch_size, num_workers=num_workers)
-
-        print(f"Epoch {epoch}, Loss: {running_loss/(i + 1)}, mAP: {mAP_score}")
-
         # Save models and metrics
         torch.save(model.state_dict(), f"fast-r{model_type}-epoch{epoch}.pt")
         with open(f"r{model_type}-metrics.txt", 'a+') as fp:
-            fp.write(f"Epoch: {epoch}, Loss: {running_loss/(i + 1)}, mAP: {mAP_score}\n")
+            fp.write(f"Epoch: {epoch}, Loss: {running_loss/(i + 1)}\n")
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model-type', '-t', default='cnn', type=str)
+    args = parser.parse_args()
+
     width = 1280
     height = 720
     n_ch = 3
-    model_type = 'cnn'
+    model_type = args.model_type
     num_classes = 6
 
     trainset = ImageDataset()
