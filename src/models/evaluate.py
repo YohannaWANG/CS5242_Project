@@ -113,4 +113,5 @@ if __name__ == "__main__":
         model.load_state_dict(torch.load(f"trained_models/fast-r{model_type}-epoch{epoch}.pt", map_location=device))
         testset = ImageDataset(is_train=False)
         score = evaluate(model, testset)
-        print(f"Epoch {epoch} score: {score}")
+        with open(f"r{model_type}-mAP.txt", 'a+') as fp:
+            fp.write(f"Epoch {epoch} score: {score}\n")
