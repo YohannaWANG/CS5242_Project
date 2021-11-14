@@ -85,7 +85,7 @@ def evaluate(model, testset, batch_size=4, num_workers=4):
 
     print(f"Total mAP: {running_mean/(i+1)}")
 
-    return metric_fn.value(iou_thresholds=0.5)['mAP']
+    return running_mean/(i+1)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
