@@ -28,10 +28,11 @@ def evaluate(model, testset, batch_size=4, num_workers=4):
     model = model.to(device)
     test_loader = DataLoader(testset, batch_size=batch_size, num_workers=num_workers)
 
-    metric_fn = MetricBuilder.build_evaluation_metric("map_2d", async_mode=False, num_classes=6)
+    running_mean = 0.0
 
     for i, (img, rois, bbox, cls) in enumerate(tqdm(test_loader)):
         img, rois, bbox, cls = img.to(device), rois.to(device), bbox.to(device), cls.to(device)
+        metric_fn = MetricBuilder.build_evaluation_metric("map_2d", async_mode=False, num_classes=len(cls.unique()))
 
         # Concatenate rois
         for batch_i in range(img.size(0)):
@@ -80,16 +81,9 @@ def evaluate(model, testset, batch_size=4, num_workers=4):
         preds, gt = preds.cpu().numpy(), gt.cpu().numpy()
 
         metric_fn.add(preds, gt)
-        
-        # if i == 0:
-        #     # Batch 0
-        #     ap_score = average_precision(preds, gt, num_classes)
-        # else:
-        #     ap_score = np.hstack((ap_score, average_precision(preds, gt, num_classes)))
+        running_mean += metric_fn.value(iou_thresholds=0.5)['mAP'].mean()
 
-        # tqdm.write(f"Batch {i} mAP: {ap_score.mean()}.")
-
-    print(f"Total mAP: {metric_fn.value(iou_thresholds=0.5)['mAP'].mean()}")
+    print(f"Total mAP: {running_mean/(i+1)}")
 
     return metric_fn.value(iou_thresholds=0.5)['mAP']
 
