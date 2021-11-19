@@ -4,7 +4,9 @@ Script for evaluating trained models
 
 import torch
 from torch.utils.data import DataLoader
+from mean_average_precision import MetricBuilder
 
+import argparse
 import numpy as np
 from tqdm import tqdm
 
@@ -15,7 +17,7 @@ from preprocess.dataset import ImageDataset
 
 from pdb import set_trace as bp
 
-def evaluate(model, testset, batch_size=2, num_workers=2):
+def evaluate(model, testset, batch_size=4, num_workers=4):
     """
     Evaluates the mean average precision (mAP) of the model given ground truth.
 
@@ -26,11 +28,11 @@ def evaluate(model, testset, batch_size=2, num_workers=2):
     model = model.to(device)
     test_loader = DataLoader(testset, batch_size=batch_size, num_workers=num_workers)
 
+    running_mean = 0.0
+
     for i, (img, rois, bbox, cls) in enumerate(tqdm(test_loader)):
         img, rois, bbox, cls = img.to(device), rois.to(device), bbox.to(device), cls.to(device)
-
-        # Get number of classes for this batch
-        num_classes = len(cls.unique())
+        metric_fn = MetricBuilder.build_evaluation_metric("map_2d", async_mode=False, num_classes=len(cls.unique()))
 
         # Concatenate rois
         for batch_i in range(img.size(0)):
@@ -77,27 +79,25 @@ def evaluate(model, testset, batch_size=2, num_workers=2):
             # gt = torch.masked_select(gt, gt_mask)
 
         preds, gt = preds.cpu().numpy(), gt.cpu().numpy()
-        
-        if i == 0:
-            # Batch 0
-            ap_score = average_precision(preds, gt, num_classes)
-        else:
-            ap_score = np.hstack((ap_score, average_precision(preds, gt, num_classes)))
-            print(ap_score.shape)
 
-        print(f"Batch {i} mAP: {ap_score.mean()}.")
+        metric_fn.add(preds, gt)
+        running_mean += metric_fn.value(iou_thresholds=0.5)['mAP'].mean()
 
-    bp()
-    print(f"Total mAP: {ap_score.mean()}")
-    return ap_score.mean()
+    print(f"Total mAP: {running_mean/(i+1)}")
+
+    return running_mean/(i+1)
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model-type', '-t', default='cnn', type=str)
+    args = parser.parse_args()
+
     width = 1280
     height = 720
     n_ch = 3
-    model_type = 'cnn'
+    model_type = args.model_type
     num_classes = 6
-    epoch = 38
+    num_epoch = 38
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -105,7 +105,13 @@ if __name__ == "__main__":
         model = RCNN(width, height, n_ch)
     elif model_type == "mlp":
         model = DenseModel(width, height, n_ch, num_classes)
+    else:
+        raise NotImplementedError(f"{model_type} is not an implemented model type!")
 
-    model.load_state_dict(torch.load(f"trained_models/fast-r{model_type}-epoch{epoch}.pt", map_location=device))
-    testset = ImageDataset(is_train=False)
-    evaluate(model, testset)
+    # Load the model trained for each epoch
+    for epoch in range(num_epoch):
+        model.load_state_dict(torch.load(f"trained_models/fast-r{model_type}-epoch{epoch}.pt", map_location=device))
+        testset = ImageDataset(is_train=False)
+        score = evaluate(model, testset)
+        with open(f"r{model_type}-mAP.txt", 'a+') as fp:
+            fp.write(f"Epoch {epoch} score: {score}\n")

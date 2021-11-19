@@ -47,7 +47,7 @@ class ImageDataset(Dataset):
         annotations = self.annotations[self.annotations["Filename"] == self.image_files[index]]
         
         # Get regions of interests
-        regions = propose_regions(img, num_regions=2000)
+        regions = propose_regions(img, num_regions=1500)
         zeros = np.zeros((len(regions), 2), dtype=float)
         labels = np.concatenate((copy.deepcopy(regions), zeros), axis=1)
 

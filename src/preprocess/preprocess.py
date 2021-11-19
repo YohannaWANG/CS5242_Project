@@ -47,6 +47,7 @@ def visualize_regions(img, regions):
 def calculate_iou(proposals, label):
     """
     Calculate the intersection over union between bounding boxes of selective search and labels
+    This code is adapted from https://gist.github.com/meyerjo/dd3533edc97c81258898f60d8978eddc
 
     :param proposals: A region proposal bounding box
     :param label: Bounding box of label
